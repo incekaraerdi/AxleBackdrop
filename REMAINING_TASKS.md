@@ -129,18 +129,34 @@
 
 ---
 
-## ✅ COMPLETED
+## 📊 PHASE STATUS
 
-- [x] Phase 1 critical issues fixed
-- [x] Distribution certificate installed
-- [x] Archive signed properly
+### Phase 1: Critical Issues ✅ COMPLETE
+- [x] Source photo integrity
+- [x] Camera permission flows
+- [x] Processing robustness
+- [x] Vision confidence scoring
+- [x] Distribution certificate
+- [x] Archive signed
 - [x] Build uploaded to App Store Connect
-- [x] TestFlight internal group created
-- [x] Build assigned to testing
-- [x] Tester invited
-- [x] App launches on real device
-- [x] Core features functional
+- [x] TestFlight live
 - [x] GitHub documentation
+
+### Phase 2: Real Device Validation 🔄 IN PROGRESS
+- [ ] Vision quality validated (10+ cars, 10+ motorcycles)
+- [ ] Spatial accuracy fixes (v1.0.3)
+- [ ] Camera/permissions tested
+- [ ] Performance baseline measured
+- [ ] External testing launched
+- [ ] App Store submission ready
+
+### Phase 3: Monetization ❌ NOT STARTED
+- [ ] RevenueCat integration
+- [ ] Subscription products created
+- [ ] Paywall UI implemented
+- [ ] Feature gating functional
+- [ ] Testing complete
+- **Timeline:** After App Store launch
 
 ---
 
@@ -200,6 +216,48 @@
 - [ ] Marketing materials
 - [ ] Multiple language support
 - [ ] Additional features
+
+---
+
+## 🔵 PHASE 3: MONETIZATION (Post-App Store)
+
+### RevenueCat Integration - NOT STARTED ❌
+
+**Prerequisites:**
+- [ ] App must be on App Store first
+- [ ] Real user feedback and metrics needed
+- [ ] Pricing decision made
+
+**Setup Tasks:**
+- [ ] Create RevenueCat account
+- [ ] Create subscription products (Free, Pro, Premium)
+- [ ] Configure in App Store Connect
+- [ ] Get RevenueCat API key
+
+**Code Implementation:**
+- [ ] Add RevenueCatManager.swift (actor pattern)
+- [ ] Add PaywallView.swift (subscription UI)
+- [ ] Add FeatureGating.swift (entitlement checks)
+- [ ] Update ExportService for feature limits
+- [ ] Add in-app purchase flow
+- [ ] Add restore purchases button
+- [ ] Add settings view subscription management
+
+**Features to Gate:**
+- [ ] Free tier: 5 listings/month
+- [ ] Pro tier: Unlimited listings, priority processing
+- [ ] Premium features (future): Batch processing, API access
+
+**Testing Required:**
+- [ ] Sandbox testing
+- [ ] Purchase flow validation
+- [ ] Restore purchases flow
+- [ ] Subscription renewal testing
+- [ ] RefreshData calls after purchase
+
+**Timeline:** 2-3 weeks (AFTER App Store launch + user feedback)  
+**Effort:** Medium (5-7 days development + 2 days testing)  
+**Blocking:** No (can launch free-only first)
 
 ---
 

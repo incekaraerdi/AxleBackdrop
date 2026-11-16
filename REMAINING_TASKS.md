@@ -235,18 +235,20 @@
 - [ ] Get RevenueCat API key
 
 **Code Implementation:**
-- [ ] Add RevenueCatManager.swift (actor pattern)
-- [ ] Add PaywallView.swift (subscription UI)
-- [ ] Add FeatureGating.swift (entitlement checks)
-- [ ] Update ExportService for feature limits
+- [ ] Add RevenueCatManager (handle subscription logic)
+- [ ] Add PaywallView (subscription UI)
+- [ ] Add FeatureGating (check user entitlements)
+- [ ] Add UserMonthlyUsage tracking (listings/month counter)
+- [ ] Update ExportService (check limits before export)
 - [ ] Add in-app purchase flow
 - [ ] Add restore purchases button
 - [ ] Add settings view subscription management
 
 **Features to Gate:**
-- [ ] Free tier: 5 listings/month
-- [ ] Pro tier: Unlimited listings, priority processing
+- [ ] Free tier: 15 listings/month (generous to avoid early user friction)
+- [ ] Pro tier: Unlimited listings, priority processing ($4.99/mo or $39.99/yr)
 - [ ] Premium features (future): Batch processing, API access
+- [ ] Free→Paid strategy: In-app banner after 10 listings, no hard limits initially
 
 **Testing Required:**
 - [ ] Sandbox testing
@@ -255,9 +257,14 @@
 - [ ] Subscription renewal testing
 - [ ] RefreshData calls after purchase
 
-**Timeline:** 2-3 weeks (AFTER App Store launch + user feedback)  
+**Timeline:** 1-2 weeks (AFTER App Store launch + user feedback)  
 **Effort:** Medium (5-7 days development + 2 days testing)  
 **Blocking:** No (can launch free-only first)
+
+**Prerequisites Clarified:**
+- Real user feedback: Minimum 50+ beta testers using app
+- Metrics needed: Churn rate, feature usage, pricing willingness
+- Acceptance: 80%+ users approve monetization in feedback survey
 
 ---
 

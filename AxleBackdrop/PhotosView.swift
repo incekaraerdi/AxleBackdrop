@@ -6,10 +6,11 @@ struct PhotosView: View {
     @Bindable var draft: ListingDraft
     let advance: () -> Void
     @State private var selectedSlot: PhotoSlot = .exteriorFront
-    @State private var pickerItem: PhotosPickerItem?
+    @State private var selectedPickerItems: [PhotosPickerItem] = []
     @State private var showCamera = false
     @State private var pendingImage: UIImage?
     @State private var errorMessage: String?
+    @State private var importingCount = 0
     @State private var cameraAvailable = UIImagePickerController.isSourceTypeAvailable(.camera)
     @State private var permissionDenied = false
 
@@ -31,23 +32,24 @@ struct PhotosView: View {
             Button("Choose a Scene", action: advance).buttonStyle(PrimaryButtonStyle())
                 .disabled(!draft.isPhotoComplete).padding(16).background(.ultraThinMaterial)
         }
-        .onChange(of: pickerItem) { _, newValue in
-            guard let newValue else { return }
+        .onChange(of: selectedPickerItems) { _, newItems in
+            guard !newItems.isEmpty else { return }
             Task {
-                do {
-                    guard let data = try await newValue.loadTransferable(type: Data.self), let image = UIImage(data: data) else { throw PhotoFileStoreError.unreadableImage }
-                    await MainActor.run { pendingImage = image }
-                } catch { await MainActor.run { errorMessage = error.localizedDescription } }
+                for (index, item) in newItems.enumerated() {
+                    do {
+                        guard let data = try await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else { throw PhotoFileStoreError.unreadableImage }
+                        await MainActor.run {
+                            importingCount = index + 1
+                            Task { await store(image, for: PhotoSlot(rawValue: index) ?? .exteriorFront) }
+                        }
+                    } catch { await MainActor.run { errorMessage = error.localizedDescription } }
+                }
+                await MainActor.run { selectedPickerItems = [] }
             }
         }
         .sheet(isPresented: $showCamera) {
             CameraPicker(guide: selectedSlot.title(for: draft.vehicleType)) { image in pendingImage = image; showCamera = false }
                 .ignoresSafeArea()
-        }
-        .sheet(item: $pendingImage) { image in
-            CropApprovalView(image: image, slot: selectedSlot, vehicleType: draft.vehicleType) { approved in
-                Task { await store(approved) }
-            }
         }
         .alert("Photo unavailable", isPresented: .constant(errorMessage != nil)) {
             Button("OK") { errorMessage = nil }
@@ -130,14 +132,20 @@ struct PhotosView: View {
                         .buttonStyle(SecondaryButtonStyle())
                 }
             }
-            PhotosPicker(selection: $pickerItem, matching: .images) {
-                Label(draft.record(for: selectedSlot).originalFilename == nil ? (cameraAvailable ? "Choose from Library" : "Select Photo") : "Replace from Library", systemImage: "photo.on.rectangle")
-                    .frame(maxWidth: .infinity, minHeight: 50)
-                    .background(cameraAvailable ? AppColor.surface : AppColor.accent)
-                    .foregroundStyle(cameraAvailable ? Color(uiColor: .label) : .white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay { RoundedRectangle(cornerRadius: 12).stroke(cameraAvailable ? AppColor.border : AppColor.accent) }
-            }.buttonStyle(.plain)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Select 5 Photos (\(draft.completedCount) uploaded)").font(.caption).foregroundStyle(AppColor.secondaryText)
+                PhotosPicker(selection: $selectedPickerItems, maxSelectionCount: 5, matching: .images) {
+                    Label(draft.completedCount >= 5 ? "Replace from Library" : "Select Photos from Library", systemImage: "photo.on.rectangle")
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(AppColor.accent)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+                if importingCount > 0 {
+                    Text("Importing \(importingCount) of 5...").font(.caption).foregroundStyle(AppColor.accent)
+                }
+            }
         }
     }
 
@@ -146,11 +154,11 @@ struct PhotosView: View {
         return PhotoFileStore.originalURL(projectID: draft.id, filename: name)
     }
 
-    @MainActor private func store(_ image: UIImage) async {
+    @MainActor private func store(_ image: UIImage, for slot: PhotoSlot) async {
         do {
             guard let data = image.jpegData(compressionQuality: 0.95) else { throw PhotoFileStoreError.unableToEncode }
-            let result = try await PhotoFileStore.shared.storeOriginal(data: data, projectID: draft.id, slot: selectedSlot)
-            var record = draft.record(for: selectedSlot)
+            let result = try await PhotoFileStore.shared.storeOriginal(data: data, projectID: draft.id, slot: slot)
+            var record = draft.record(for: slot)
             record.originalFilename = result.originalFilename
             record.sourceFilename = result.sourceFilename
             record.sourceWidth = result.width
@@ -160,34 +168,9 @@ struct PhotosView: View {
             record.state = .ready
             record.errorMessage = nil
             draft.updateRecord(record)
-            pendingImage = nil
-            pickerItem = nil
-            if let next = PhotoSlot(rawValue: selectedSlot.rawValue + 1) { selectedSlot = next }
         } catch { errorMessage = error.localizedDescription }
     }
 }
-
-struct CropApprovalView: View {
-    @Environment(\.dismiss) private var dismiss
-    let image: UIImage
-    let slot: PhotoSlot
-    let vehicleType: VehicleType
-    let approve: (UIImage) -> Void
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 16) {
-                Image(uiImage: image.normalizedFourByThree()).resizable().scaledToFit().background(AppColor.photoCanvas)
-                    .clipShape(RoundedRectangle(cornerRadius: 20)).padding(.horizontal)
-                Text(slot == .instrument ? "Confirm the complete instrument cluster and every digit are visible." : "Confirm the vehicle and condition-relevant details fit inside the 4:3 frame.")
-                    .font(.subheadline).foregroundStyle(AppColor.secondaryText).padding(.horizontal)
-                Spacer()
-                Button("Use 4:3 Crop") { approve(image); dismiss() }.buttonStyle(PrimaryButtonStyle()).padding()
-            }.background(AppColor.canvas).navigationTitle(slot.title(for: vehicleType)).navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Cancel") { dismiss() } }
-        }
-    }
-}
-
 struct CameraPicker: UIViewControllerRepresentable {
     let guide: String
     let completion: (UIImage) -> Void

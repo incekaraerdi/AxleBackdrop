@@ -1,32 +1,20 @@
-//
-//  AxleBackdropApp.swift
-//  AxleBackdrop
-//
-//  Created by RDcorp on 16.11.2026.
-//
-
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct AxleBackdropApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+    private let container: ModelContainer
 
+    init() {
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            container = try ModelContainer(for: ListingDraft.self, DealerTemplate.self)
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            fatalError("Unable to create AxleBackdrop store: \(error)")
         }
-    }()
+    }
 
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-        .modelContainer(sharedModelContainer)
+        WindowGroup { ContentView() }
+            .modelContainer(container)
     }
 }

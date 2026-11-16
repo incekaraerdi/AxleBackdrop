@@ -23,14 +23,20 @@ final class AxleBackdropUITests: XCTestCase {
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testVehicleSelectionReachesPhotos() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        if app.buttons["New Listing"].waitForExistence(timeout: 5) {
+            app.buttons["New Listing"].tap()
+        }
+        XCTAssertTrue(app.staticTexts["Choose a vehicle"].waitForExistence(timeout: 5))
+        app.buttons.matching(NSPredicate(format: "label CONTAINS 'Motorcycle'")).firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Full left-side profile"].exists)
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.navigationBars["Photos"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["0 of 5 photos"].exists)
+        XCTAssertTrue(app.buttons["Choose from Library"].exists)
     }
 
     @MainActor
